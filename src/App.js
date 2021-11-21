@@ -14,6 +14,7 @@ export default function App() {
   const[songs,setAllsongs] = React.useState([]);
   const contractAddress = "0x7Fb01B9833266CE2253459a7A9Cca0cf2192D4E3"
   const contractAbi = abi.abi;
+  const rinkebyChain = '0x4'; 
 
 
  const onChangeHandler = event => {
@@ -28,18 +29,7 @@ export default function App() {
     }else{
       console.log("We have Ethereum object",ethereum)
     }
-    ethereum.request({method:'eth_accounts'})
-    .then(accounts =>{
-
-      if(accounts.length !==0){
-        const account =accounts[0];
-        console.log("Found an authorized account",account)
-        setCurrentAccount(account);
-        getAllsongs();
-      }else{
-        console.log("No authorized account found")
-      }
-    })
+     setCorrectNetwork();
   }
 
   const connectWallet = ()=>{
@@ -47,14 +37,42 @@ export default function App() {
     if(!ethereum){
       alert("Get metamask");
     }
-    ethereum.request({method:'eth_requestAccounts'})
-    .then(accounts=>{
-      console.log("Connected",accounts[0])
-      setCurrentAccount(accounts[0])
-      getAllsongs();
-    })
-    .catch(err=>console.log(err));
+    setCorrectNetwork();
   }
+  const setCorrectNetwork = async()=>{
+    const {ethereum} = window;
+    const chainId = await ethereum.request({ method: 'eth_chainId' });
+    if(chainId !== rinkebyChain){
+ try {
+ await ethereum.request({
+   method: 'wallet_switchEthereumChain',
+   params: [{ chainId: rinkebyChain }],
+ });
+       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+       const account = accounts[0];
+       setCurrentAccount(account);
+       getAllsongs();
+     
+
+} catch (switchError) {
+ // This error code indicates that the chain has not been added to MetaMask.
+ if (switchError.code === 4902) {
+
+  alert("You don't have rinkeby in your metamask, add it and try again ");
+
+ }
+ alert("YFailed to switch to Rinkeby network, Switch to rinkeby network Manualy and try again");
+ // handle other "switch" errors
+}
+    }else{
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+       const account = accounts[0];
+       setCurrentAccount(account);
+       getAllsongs();
+    }
+ 
+
+ }
   const addSong = async() => {
   
   try{
